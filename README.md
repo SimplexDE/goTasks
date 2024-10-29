@@ -1,2 +1,3 @@
-# todoListAppGO
-Todo List Terminal Application in GO
+# goTasks
+
+Simple Tasks CLI Application written in Go.
