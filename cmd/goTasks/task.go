@@ -16,6 +16,16 @@ type Task struct {
 	done    bool
 }
 
+func ClearTasks() error {
+	file, err := os.OpenFile("tasks.csv", os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+
+	file.Close()
+	return nil
+}
+
 func (t *Task) Add(name string) error {
 	nextID := int32(1)
 
