@@ -16,13 +16,16 @@ type Task struct {
 	done    bool
 }
 
+var lock = fslock.New("tasks.csv")
+
 func ClearTasks() error {
 	file, err := os.OpenFile("tasks.csv", os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
-
+	lock.Lock()
 	file.Close()
+	lock.Unlock()
 	return nil
 }
 
@@ -35,34 +38,32 @@ func (t *Task) Add(name string) error {
 	}
 	defer file.Close()
 
-	lock := fslock.New(file.Name())
-
 	writer := csv.NewWriter(file)
 
 	lock.Lock()
-		// Open the file in read mode to find the last ID
-		readFile, err := os.Open("tasks.csv")
+	// Open the file in read mode to find the last ID
+	readFile, err := os.Open("tasks.csv")
+	if err != nil {
+		return err
+	}
+	defer readFile.Close()
+
+	reader := csv.NewReader(readFile)
+	lock.Unlock()
+
+	// Iterate through the rows to find the last ID
+	for {
+		record, err := reader.Read()
+		if err != nil {
+			break
+		}
+		id, err := strconv.Atoi(record[0])
 		if err != nil {
 			return err
 		}
-		defer readFile.Close()
-
-		reader := csv.NewReader(readFile)
-	lock.Unlock()
-
-		// Iterate through the rows to find the last ID
-		for {
-			record, err := reader.Read()
-			if err != nil {
-				break
-			}
-			id, err := strconv.Atoi(record[0])
-			if err != nil {
-				return err
-			}
-			if int32(id) >= nextID {
-				nextID = int32(id) + 1
-			}
+		if int32(id) >= nextID {
+			nextID = int32(id) + 1
+		}
 
 	}
 
@@ -100,8 +101,6 @@ func (t *Task) Complete(taskID int32) error {
 	}
 	defer file.Close()
 
-	lock := fslock.New(file.Name())
-
 	reader := csv.NewReader(file)
 
 	lock.Lock()
@@ -127,6 +126,8 @@ func (t *Task) Complete(taskID int32) error {
 			break
 		}
 	}
+
+	lock.Lock()
 	// Write the updated records back to the CSV file
 	file, err = os.OpenFile("tasks.csv", os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
@@ -134,7 +135,6 @@ func (t *Task) Complete(taskID int32) error {
 	}
 	defer file.Close()
 
-	lock.Lock()
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
@@ -155,7 +155,6 @@ func (t *Task) Delete(targetID string) error {
 		return err
 	}
 	defer file.Close()
-	lock := fslock.New(file.Name())
 
 	lock.Lock()
 	// Get all records
@@ -198,8 +197,6 @@ func (t *Task) Delete(targetID string) error {
 	if err := w.Error(); err != nil {
 		return err
 	}
-
-
 	return nil
 }
 	
