@@ -2,6 +2,7 @@ package gotasks
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -124,3 +125,54 @@ func (t *Task) Complete(taskID int32) error {
 
 	return nil
 }
+
+func (t *Task) Delete(targetID string) error {
+	// Open csv file
+	file, err := os.Open("tasks.csv")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Get all records
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return err
+	}
+
+	// Filter out unwanted record
+	var filteredRecords [][]string
+	for _, record := range records {
+		if record[0] != targetID {
+			filteredRecords = append(filteredRecords, record)
+		}
+	}
+
+	// Open the file again in write mode, truncating it for a fresh write
+	file, err = os.OpenFile("tasks.csv", os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Write the remaining rows back to the file
+	w := csv.NewWriter(file)
+	for _, record := range filteredRecords {
+		err := w.Write(record)
+		fmt.Println(record)
+		if err != nil {
+			return err
+		}
+	}
+	w.Flush()
+
+	// Check for errors after flushing the writer
+	if err := w.Error(); err != nil {
+		return err
+	}
+
+
+	return nil
+}
+	
