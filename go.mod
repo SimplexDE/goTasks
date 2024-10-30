@@ -1,6 +1,6 @@
 module github.com/SimplexDE/goTasks
 
-go 1.22.4
+go 1.23.2
 
 require (
 	github.com/mergestat/timediff v0.0.3
