@@ -17,7 +17,7 @@ var rootCmd = &cobra.Command{
 	Use:   "goTasks",
 	Short: "Simple Task CLI Application",
 	Long: `Simple Task CLI Application for managing Todos written in Go`,
-	Version: "1.0.0",
+	Version: "1.0.1",
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 

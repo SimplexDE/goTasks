@@ -156,14 +156,13 @@ func (t *Task) Delete(targetID string) error {
 	}
 	defer file.Close()
 
-	lock.Lock()
+	
 	// Get all records
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
 		return err
 	}
-	lock.Unlock()
 
 	// Filter out unwanted record
 	var filteredRecords [][]string
